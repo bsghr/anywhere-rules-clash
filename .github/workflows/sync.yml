@@ -1,0 +1,31 @@
+name: Auto Convert Rules
+
+on:
+  schedule:
+    - cron: '0 20 * * *'  # 每天北京时间早上 4:00 自动运行
+  workflow_dispatch:     # 允许在 GitHub 网页手动点击触发
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write     # 赋予脚本把转换好的文件写入仓库的权限
+
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 配置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: 执行转换脚本
+        run: python convert.py
+
+      - name: 提交并推送到仓库
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add rules/
+          git diff --staged --quiet || (git commit -m "Auto update rules [$(date +'%Y-%m-%d')]" && git push)
